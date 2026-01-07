@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mevzuat Takip Sistemi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-blue-800 text-white p-4 shadow-lg sticky top-0">
+        <h1 class="text-xl font-bold text-center">MEVZUAT REHBERİ</h1>
+        <input type="text" id="ara" placeholder="Kanun, Yönetmelik veya Karar ara..." 
+               class="w-full mt-3 p-2 rounded text-black outline-none focus:ring-2 focus:ring-yellow-400">
+    </nav>
+
+    <div id="liste" class="p-4 space-y-2">
+        <p class="text-center text-gray-500 mt-10">Dosyalar taranıyor...</p>
+    </div>
+
+    <script>
+        // BURASI ÖNEMLİ: Kendi bilgilerini yaz
+        const kullanici = "Poyraz46"; 
+        const repo = "Mevzuat-Takip-Projesi";
+
+        async function dosyalariGetir() {
+            const listeDiv = document.getElementById('liste');
+            try {
+                // GitHub API ile tüm dosyaları çekiyoruz
+                const response = await fetch(`https://api.github.com/repos/${kullanici}/${repo}/git/trees/main?recursive=1`);
+                const data = await response.json();
+                const dosyalar = data.tree.filter(item => item.path.endsWith('.html') || item.path.endsWith('.htm'));
+
+                window.mevzuatVerisi = dosyalar;
+                ekranaBas(dosyalar);
+            } catch (hata) {
+                listeDiv.innerHTML = "Veriler yüklenemedi.";
+            }
+        }
+
+        function ekranaBas(liste) {
+            const listeDiv = document.getElementById('liste');
+            listeDiv.innerHTML = "";
+            liste.forEach(item => {
+                const link = document.createElement('a');
+                link.href = item.path;
+                link.className = "block bg-white p-3 rounded shadow hover:bg-blue-50 border-l-4 border-blue-800 transition";
+                link.innerText = decodeURIComponent(item.path.split('/').pop().replace('.html','').replace('.htm',''));
+                listeDiv.appendChild(link);
+            });
+        }
+
+        document.getElementById('ara').addEventListener('input', (e) => {
+            const terim = e.target.value.toLowerCase();
+            const sonuc = window.mevzuatVerisi.filter(f => f.path.toLowerCase().includes(terim));
+            ekranaBas(sonuc);
+        });
+
+        dosyalariGetir();
+    </script>
+</body>
+</html>
