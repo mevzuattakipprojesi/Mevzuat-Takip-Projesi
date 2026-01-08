@@ -6,33 +6,44 @@
     <title>Mevzuat Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        #okuyucuModu { display: none; position: fixed; top: 0; left: 0; w: 100%; h: 100%; background: white; z-index: 100; }
+        #okuyucuModu { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; }
         iframe { width: 100%; height: calc(100vh - 120px); border: none; }
-        .highlight { background-color: yellow; font-weight: bold; }
+        /* Vurgulama Rengi */
+        .highlight { background-color: #fef08a; color: #1e40af; font-weight: bold; padding: 0 2px; border-radius: 4px; }
+        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
     </style>
 </head>
 <body class="bg-gray-50">
 
-    <div id="anaSayfa">
-        <nav class="bg-blue-900 text-white p-4 sticky top-0 shadow-lg">
-            <h1 class="text-center font-bold">MEVZUAT SİSTEMİ</h1>
-            <input type="text" id="ara" placeholder="Tüm mevzuatta ara..." class="w-full mt-2 p-3 rounded-lg text-black">
+    <div id="anaSayfa" class="pb-10">
+        <nav class="bg-blue-900 text-white p-4 sticky top-0 shadow-xl z-30">
+            <div class="max-w-4xl mx-auto text-center">
+                <h1 class="text-lg font-bold tracking-widest uppercase">Mevzuat Rehberi</h1>
+                <div class="relative mt-3">
+                    <input type="text" id="ara" placeholder="Kanun, madde veya içerik ara..." 
+                           class="w-full p-4 rounded-xl text-black outline-none focus:ring-4 focus:ring-yellow-500 shadow-inner pr-12">
+                    <div class="absolute right-4 top-4 text-blue-900" id="loading">🔍</div>
+                </div>
+                <div id="sayac" class="text-xs mt-2 text-blue-200 font-medium">Veriler hazırlanıyor...</div>
+            </div>
         </nav>
-        <div id="sonuclar" class="p-4 space-y-3 max-w-4xl mx-auto"></div>
+
+        <div id="sonuclar" class="p-4 space-y-4 max-w-4xl mx-auto">
+            </div>
     </div>
 
     <div id="okuyucuModu">
-        <div class="bg-gray-100 p-2 border-b flex flex-col gap-2 shadow-md">
+        <div class="bg-slate-100 p-2 border-b flex flex-col gap-2 shadow-md">
             <div class="flex justify-between items-center px-2">
-                <button onclick="kapat()" class="bg-red-500 text-white px-4 py-1 rounded">← Geri</button>
+                <button onclick="kapat()" class="bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-bold">← Geri</button>
                 <div class="flex gap-2">
-                    <button onclick="paylas()" class="bg-blue-600 text-white p-2 rounded text-sm">Paylaş</button>
-                    <button onclick="favoriEkle()" class="bg-yellow-500 text-white p-2 rounded text-sm">⭐</button>
+                    <button onclick="paylas()" class="bg-blue-600 text-white p-2 rounded-lg text-sm">Paylaş</button>
+                    <button onclick="favoriEkle()" class="bg-amber-500 text-white p-2 rounded-lg text-sm font-bold">⭐</button>
                 </div>
             </div>
             <div class="flex gap-2 px-2">
-                <input type="text" id="sayfaIciAra" placeholder="Sayfa içinde kelime bul..." class="flex-grow p-2 border rounded">
-                <button onclick="sayfadaAra()" class="bg-green-600 text-white px-4 rounded">Bul</button>
+                <input type="text" id="sayfaIciAra" placeholder="Sayfada kelime bul..." class="flex-grow p-2 border rounded-lg outline-none focus:border-blue-500 text-sm">
+                <button onclick="sayfadaAra()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Bul</button>
             </div>
         </div>
         <iframe id="mevzuatFrame" src=""></iframe>
@@ -40,69 +51,94 @@
 
     <script>
         let veri = [];
-        const anaSayfa = document.getElementById('anaSayfa');
-        const okuyucuModu = document.getElementById('okuyucuModu');
-        const frame = document.getElementById('mevzuatFrame');
+        let aramaTimer;
 
-        // Veriyi Yükle
-        fetch('ara_verisi.json').then(r => r.json()).then(d => { veri = d; ekranaBas(veri); });
+        // 1. Veriyi Çek
+        fetch('ara_verisi.json')
+            .then(r => r.json())
+            .then(d => { 
+                veri = d; 
+                document.getElementById('sayac').innerText = `${veri.length} mevzuat yüklendi.`;
+                ekranaBas(veri, ""); 
+            });
 
-        // Listeleme
-        function ekranaBas(liste) {
+        // 2. Metni Vurgulama Fonksiyonu
+        function vurgula(metin, kelime) {
+            if (!kelime || kelime.length < 2) return metin;
+            const regex = new RegExp(`(${kelime.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            return metin.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        // 3. Listeleme
+        function ekranaBas(liste, anahtar) {
             const div = document.getElementById('sonuclar');
+            const sayac = document.getElementById('sayac');
             div.innerHTML = "";
-            liste.slice(0, 50).forEach(s => {
+            
+            sayac.innerText = `${liste.length} sonuç bulundu.`;
+
+            // Performans için ilk 60 sonucu göster
+            liste.slice(0, 60).forEach(s => {
                 const kart = document.createElement('div');
-                kart.className = "bg-white p-4 rounded shadow border-l-4 border-blue-900 cursor-pointer";
-                kart.innerHTML = `<strong>${s.baslik}</strong><p class='text-xs text-gray-500'>${s.icerik.substring(0,100)}...</p>`;
+                kart.className = "bg-white p-5 rounded-xl shadow-sm border border-gray-200 hover:border-blue-400 transition cursor-pointer";
+                
+                const temizBaslik = s.baslik.replace(/\.[^/.]+$/, "");
+                const vurguluBaslik = vurgula(temizBaslik, anahtar);
+                const onizleme = s.icerik ? s.icerik.substring(0, 250) + "..." : "İçerik yok.";
+                const vurguluIcerik = vurgula(onizleme, anahtar);
+
+                kart.innerHTML = `
+                    <h3 class="font-bold text-blue-900 text-md leading-tight">${vurguluBaslik}</h3>
+                    <p class="text-sm text-gray-500 mt-2 line-clamp-3">${vurguluIcerik}</p>
+                `;
                 kart.onclick = () => ac(s.yol);
                 div.appendChild(kart);
             });
         }
 
-        // Mevzuatı Aç
+        // 4. Ana Arama Mantığı
+        document.getElementById('ara').addEventListener('input', (e) => {
+            const anahtar = e.target.value.toLowerCase('tr').trim();
+            clearTimeout(aramaTimer);
+
+            aramaTimer = setTimeout(() => {
+                const sonuclar = veri.filter(item => 
+                    item.baslik.toLowerCase('tr').includes(anahtar) || 
+                    item.icerik.toLowerCase('tr').includes(anahtar)
+                );
+                ekranaBas(sonuclar, anahtar);
+            }, 300);
+        });
+
+        // --- OKUYUCU FONKSİYONLARI ---
         function ac(yol) {
-            anaSayfa.style.display = 'none';
-            okuyucuModu.style.display = 'block';
-            frame.src = yol;
+            document.getElementById('anaSayfa').style.display = 'none';
+            document.getElementById('okuyucuModu').style.display = 'block';
+            document.getElementById('mevzuatFrame').src = yol;
             window.suAnkiYol = window.location.origin + window.location.pathname.replace('index.html','') + yol;
         }
 
-        // Mevzuatı Kapat
         function kapat() {
-            okuyucuModu.style.display = 'none';
-            anaSayfa.style.display = 'block';
-            frame.src = "";
+            document.getElementById('okuyucuModu').style.display = 'none';
+            document.getElementById('anaSayfa').style.display = 'block';
         }
 
-        // SAYFA İÇİ ARAMA (Temel Mantık)
         function sayfadaAra() {
             const kelime = document.getElementById('sayfaIciAra').value;
-            if(!kelime) return;
-            // iframe içindeki tarayıcı araması (CTRL+F simülasyonu)
-            frame.contentWindow.find(kelime);
+            if(kelime) window.frames[0].window.find(kelime);
         }
 
-        // PAYLAŞ FONKSİYONU
         function paylas() {
             if (navigator.share) {
-                navigator.share({ title: 'Mevzuat Paylaş', url: window.suAnkiYol });
+                navigator.share({ title: 'Mevzuat', url: window.suAnkiYol });
             } else {
-                alert("Link kopyalandı: " + window.suAnkiYol);
+                alert("Link: " + window.suAnkiYol);
             }
         }
 
-        // FAVORİ (Şimdilik sadece konsola yazar, sonra LocalStorage ekleriz)
         function favoriEkle() {
-            alert("Favorilere eklendi! (Geliştirme aşamasında)");
+            alert("Favorilere eklendi!");
         }
-
-        // Ana Arama
-        document.getElementById('ara').addEventListener('input', (e) => {
-            const anahtar = e.target.value.toLowerCase('tr');
-            const sonuc = veri.filter(item => item.baslik.toLowerCase('tr').includes(anahtar) || item.icerik.toLowerCase('tr').includes(anahtar));
-            ekranaBas(sonuc);
-        });
     </script>
 </body>
 </html>
