@@ -123,11 +123,44 @@
             document.getElementById('anaSayfa').style.display = 'block';
         }
 
-        function sayfadaAra() {
-            const kelime = document.getElementById('sayfaIciAra').value;
-            if(kelime) window.frames[0].window.find(kelime);
-        }
+    // SAYFA İÇİ GELİŞMİŞ ARAMA VE BOYAMA
+async function sayfadaAra() {
+    const kelime = document.getElementById('sayfaIciAra').value.trim();
+    const frame = document.getElementById('mevzuatFrame');
+    
+    if (!kelime || kelime.length < 2) return;
 
+    try {
+        // Iframe içindeki dökümana eriş
+        const frameDoc = frame.contentDocument || frame.contentWindow.document;
+        let icerik = frameDoc.body.innerHTML;
+
+        // Önceki boyamaları temizle (Sonsuz döngüyü önlemek için)
+        icerik = icerik.replace(/<mark class="bulunan">|<\/mark>/g, "");
+
+        // Kelimeyi bul ve <mark> etiketi içine al
+        const regex = new RegExp(`(${kelime})`, 'gi');
+        const eslesmeler = icerik.match(regex);
+        
+        if (eslesmeler) {
+            // Yeni içeriği yerleştir (Boyanmış hali)
+            frameDoc.body.innerHTML = icerik.replace(regex, '<mark class="bulunan" style="background: #ff0; color: #000; padding: 2px; border-radius: 2px;">$1</mark>');
+            
+            // Sayı bildirimi
+            alert(`${eslesmeler.length} adet sonuç bulundu.`);
+            
+            // İlk bulunan sonuca odaklan (Scroll)
+            const ilkElement = frameDoc.querySelector('.bulunan');
+            if (ilkElement) ilkElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            alert("Kelime sayfa içinde bulunamadı.");
+        }
+    } catch (e) {
+        console.error("Hata: Sayfa içeriğine erişilemedi. Güvenlik kısıtlaması olabilir.", e);
+        // Yedek yöntem: Klasik tarayıcı araması
+        window.frames[0].window.find(kelime);
+    }
+}
         function paylas() {
             if (navigator.share) {
                 navigator.share({ title: 'Mevzuat', url: window.suAnkiYol });
