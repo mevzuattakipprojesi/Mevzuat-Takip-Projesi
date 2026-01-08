@@ -130,33 +130,44 @@
         });
 
         // 4. KANUNU OKUYUCUDA AÇ
-        async function kanunAc(yol) {
-            document.getElementById('anaSayfa').style.display = 'none';
-            document.getElementById('okuyucuModu').style.display = 'block';
-            const icerikDiv = document.getElementById('mevzuatIcerik');
-            icerikDiv.innerHTML = "<div class='text-center py-20 text-slate-400 animate-pulse'>Yükleniyor...</div>";
+    async function kanunAc(yol) {
+    document.getElementById('anaSayfa').style.display = 'none';
+    document.getElementById('okuyucuModu').style.display = 'block';
+    const icerikDiv = document.getElementById('mevzuatIcerik');
+    icerikDiv.innerHTML = "<div class='text-center py-20'>Yükleniyor...</div>";
 
-            try {
-                const res = await fetch(yol);
-                const html = await res.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                
-                // Gereksiz stil ve scriptleri temizle
-                const scripts = doc.querySelectorAll('script, style');
-                scripts.forEach(s => s.remove());
-                
-                icerikDiv.innerHTML = doc.body.innerHTML;
-                window.suAnkiUrl = window.location.origin + window.location.pathname.replace('index.html','') + yol;
-                
-                // Aramayı sıfırla
-                document.getElementById('sayfaIciAra').value = "";
-                document.getElementById('sayfaSayac').innerText = "0/0";
-                window.scrollTo(0,0);
-            } catch (err) {
-                icerikDiv.innerHTML = "<div class='text-red-500'>Hata: Sayfa yüklenemedi.</div>";
-            }
-        }
+    try {
+        const res = await fetch(yol);
+        let html = await res.text();
+        
+        // --- WORD ÇÖPLERİNİ TEMİZLEME BAŞLANGIÇ ---
+        // 1. Yazı tipi ve mso kodlarını temizle
+        html = html.replace(/font-family:[^;"]+;?/g, "");
+        html = html.replace(/mso-[^;"]+;?/g, "");
+        html = html.replace(/<o:p>|<\/o:p>/g, ""); // Word özel boşluk tagi
+        
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // 2. Gereksiz tüm stil ve script etiketlerini dökümandan kaldır
+        const gereksizler = doc.querySelectorAll('style, script, meta, link, xml');
+        gereksizler.forEach(el => el.remove());
+        
+        // 3. Mevcut tüm elementlerin içindeki "style" niteliklerini temizle
+        const tumElementler = doc.querySelectorAll('*');
+        tumElementler.forEach(el => el.removeAttribute('style'));
+        // --- TEMİZLİK BİTTİ ---
+
+        icerikDiv.innerHTML = doc.body.innerHTML;
+        window.suAnkiUrl = window.location.origin + window.location.pathname.replace('index.html','') + yol;
+        
+        document.getElementById('sayfaIciAra').value = "";
+        document.getElementById('sayfaSayac').innerText = "0/0";
+        window.scrollTo(0,0);
+    } catch (err) {
+        icerikDiv.innerHTML = "Hata oluştu.";
+    }
+}
 
         // 5. SAYFA İÇİ ARAMA VE BOYAMA
         document.getElementById('sayfaIciAra').addEventListener('input', function() {
