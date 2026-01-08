@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mevzuat Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #okuyucuModu { display: none; position: fixed; top: 0; left: 0; w: 100%; h: 100%; background: white; z-index: 100; }
+        iframe { width: 100%; height: calc(100vh - 120px); border: none; }
+        .highlight { background-color: yellow; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <div id="anaSayfa">
+        <nav class="bg-blue-900 text-white p-4 sticky top-0 shadow-lg">
+            <h1 class="text-center font-bold">MEVZUAT SİSTEMİ</h1>
+            <input type="text" id="ara" placeholder="Tüm mevzuatta ara..." class="w-full mt-2 p-3 rounded-lg text-black">
+        </nav>
+        <div id="sonuclar" class="p-4 space-y-3 max-w-4xl mx-auto"></div>
+    </div>
+
+    <div id="okuyucuModu">
+        <div class="bg-gray-100 p-2 border-b flex flex-col gap-2 shadow-md">
+            <div class="flex justify-between items-center px-2">
+                <button onclick="kapat()" class="bg-red-500 text-white px-4 py-1 rounded">← Geri</button>
+                <div class="flex gap-2">
+                    <button onclick="paylas()" class="bg-blue-600 text-white p-2 rounded text-sm">Paylaş</button>
+                    <button onclick="favoriEkle()" class="bg-yellow-500 text-white p-2 rounded text-sm">⭐</button>
+                </div>
+            </div>
+            <div class="flex gap-2 px-2">
+                <input type="text" id="sayfaIciAra" placeholder="Sayfa içinde kelime bul..." class="flex-grow p-2 border rounded">
+                <button onclick="sayfadaAra()" class="bg-green-600 text-white px-4 rounded">Bul</button>
+            </div>
+        </div>
+        <iframe id="mevzuatFrame" src=""></iframe>
+    </div>
+
+    <script>
+        let veri = [];
+        const anaSayfa = document.getElementById('anaSayfa');
+        const okuyucuModu = document.getElementById('okuyucuModu');
+        const frame = document.getElementById('mevzuatFrame');
+
+        // Veriyi Yükle
+        fetch('ara_verisi.json').then(r => r.json()).then(d => { veri = d; ekranaBas(veri); });
+
+        // Listeleme
+        function ekranaBas(liste) {
+            const div = document.getElementById('sonuclar');
+            div.innerHTML = "";
+            liste.slice(0, 50).forEach(s => {
+                const kart = document.createElement('div');
+                kart.className = "bg-white p-4 rounded shadow border-l-4 border-blue-900 cursor-pointer";
+                kart.innerHTML = `<strong>${s.baslik}</strong><p class='text-xs text-gray-500'>${s.icerik.substring(0,100)}...</p>`;
+                kart.onclick = () => ac(s.yol);
+                div.appendChild(kart);
+            });
+        }
+
+        // Mevzuatı Aç
+        function ac(yol) {
+            anaSayfa.style.display = 'none';
+            okuyucuModu.style.display = 'block';
+            frame.src = yol;
+            window.suAnkiYol = window.location.origin + window.location.pathname.replace('index.html','') + yol;
+        }
+
+        // Mevzuatı Kapat
+        function kapat() {
+            okuyucuModu.style.display = 'none';
+            anaSayfa.style.display = 'block';
+            frame.src = "";
+        }
+
+        // SAYFA İÇİ ARAMA (Temel Mantık)
+        function sayfadaAra() {
+            const kelime = document.getElementById('sayfaIciAra').value;
+            if(!kelime) return;
+            // iframe içindeki tarayıcı araması (CTRL+F simülasyonu)
+            frame.contentWindow.find(kelime);
+        }
+
+        // PAYLAŞ FONKSİYONU
+        function paylas() {
+            if (navigator.share) {
+                navigator.share({ title: 'Mevzuat Paylaş', url: window.suAnkiYol });
+            } else {
+                alert("Link kopyalandı: " + window.suAnkiYol);
+            }
+        }
+
+        // FAVORİ (Şimdilik sadece konsola yazar, sonra LocalStorage ekleriz)
+        function favoriEkle() {
+            alert("Favorilere eklendi! (Geliştirme aşamasında)");
+        }
+
+        // Ana Arama
+        document.getElementById('ara').addEventListener('input', (e) => {
+            const anahtar = e.target.value.toLowerCase('tr');
+            const sonuc = veri.filter(item => item.baslik.toLowerCase('tr').includes(anahtar) || item.icerik.toLowerCase('tr').includes(anahtar));
+            ekranaBas(sonuc);
+        });
+    </script>
+</body>
+</html>
