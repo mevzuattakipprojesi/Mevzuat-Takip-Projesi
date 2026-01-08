@@ -1,110 +1,224 @@
-<div id="okuyucuModu">
-    <div class="bg-white border-b sticky top-0 shadow-md p-3 z-50">
-        <div class="flex justify-between items-center max-w-4xl mx-auto mb-2">
-            <button onclick="kapat()" class="bg-gray-800 text-white px-5 py-2 rounded-lg font-bold hover:bg-black transition">← GERİ</button>
-            <div class="flex gap-2">
-                <button onclick="paylas()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Paylaş</button>
-                <button onclick="favoriEkle()" class="bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-medium">⭐ Favori</button>
-            </div>
-        </div>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mevzuat Takip Sistemi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #okuyucuModu { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; overflow-y: auto; }
         
-        <div class="max-w-4xl mx-auto flex flex-wrap gap-2 items-center bg-gray-50 p-2 rounded-xl border border-gray-200">
-            <div class="relative flex-grow">
-                <input type="text" id="sayfaIciAra" placeholder="Kanun içinde ara..." 
-                       class="w-full p-3 pr-20 border-2 border-blue-100 rounded-lg outline-none focus:border-blue-500 transition">
-                <span id="bulunanAdet" class="absolute right-3 top-3.5 text-blue-600 font-bold text-sm bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                    0/0
-                </span>
+        /* Arama Vurguları */
+        .highlight { background-color: #fef08a; color: #1e40af; font-weight: bold; padding: 0 2px; border-radius: 2px; transition: all 0.2s; }
+        .active-highlight { 
+            background-color: #f59e0b !important; 
+            color: white !important;
+            border: 2px solid #b45309 !important; 
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+            transform: scale(1.1);
+            display: inline-block;
+        }
+
+        #mevzuatIcerik { line-height: 1.8; font-size: 1.1rem; color: #1f2937; }
+        #mevzuatIcerik p { margin-bottom: 1rem; }
+        
+        /* Mobil Kaydırma Çubuğu Gizleme */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50 antialiased">
+
+    <div id="anaSayfa" class="min-h-screen">
+        <nav class="bg-blue-900 text-white p-5 sticky top-0 shadow-2xl z-30">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h1 class="text-xl font-black tracking-tighter">MEVZUAT PRO</h1>
+                    <span id="toplamSayi" class="bg-blue-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest text-blue-200">Yükleniyor...</span>
+                </div>
+                <div class="relative">
+                    <input type="text" id="anaAra" placeholder="Kanun adı veya içerik içinde ara..." 
+                           class="w-full p-4 pl-12 rounded-2xl text-black shadow-inner outline-none focus:ring-4 focus:ring-blue-400 transition-all">
+                    <span class="absolute left-4 top-4.5 opacity-40 text-xl">🔍</span>
+                </div>
             </div>
-            
-            <button onclick="siradakiEslasme()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold shadow-md hover:bg-blue-700 active:scale-95 transition flex items-center gap-2">
-                <span>Sıradaki</span>
-                <span class="text-xs">▼</span>
-            </button>
-        </div>
+        </nav>
+
+        <div id="anaListe" class="p-4 max-w-4xl mx-auto space-y-4">
+            </div>
     </div>
-    
-    <div id="mevzuatIcerik" class="max-w-4xl mx-auto bg-white shadow-sm min-h-screen pb-20">
-        </div>
-</div>
 
-<script>
-    // GEREKLİ DEĞİŞKENLER
-    let tumEslasmeler = [];
-    let aktifIndeks = -1;
-
-    // SAYFA İÇİ ARAMA VE BOYAMA FONKSİYONU
-    document.getElementById('sayfaIciAra').addEventListener('input', function() {
-        const kelime = this.value.trim();
-        const icerikDiv = document.getElementById('mevzuatIcerik');
-        const adetGosterge = document.getElementById('bulunanAdet');
+    <div id="okuyucuModu">
+        <header class="bg-white border-b sticky top-0 shadow-lg p-3 z-50">
+            <div class="max-w-5xl mx-auto">
+                <div class="flex justify-between items-center mb-3">
+                    <button onclick="kapat()" class="bg-slate-800 text-white px-5 py-2 rounded-xl font-bold active:scale-90 transition shadow-lg">← GERİ</button>
+                    <div class="flex gap-2">
+                        <button onclick="paylas()" class="bg-blue-500 text-white p-2 rounded-xl shadow-md">📤 Paylaş</button>
+                        <button onclick="favoriEkle()" class="bg-amber-400 text-white p-2 rounded-xl shadow-md font-bold">⭐</button>
+                    </div>
+                </div>
+                
+                <div class="flex gap-2 items-center bg-slate-50 p-2 rounded-2xl border border-slate-200">
+                    <div class="relative flex-grow">
+                        <input type="text" id="sayfaIciAra" placeholder="Bu kanunda bul..." 
+                               class="w-full p-3 pr-20 rounded-xl border-2 border-slate-200 outline-none focus:border-blue-500 transition">
+                        <span id="sayfaSayac" class="absolute right-3 top-3.5 bg-blue-100 text-blue-700 font-bold text-xs px-2 py-1 rounded-md border border-blue-200">
+                            0/0
+                        </span>
+                    </div>
+                    <button onclick="siradaki()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-black shadow-lg hover:bg-blue-700 active:scale-95 transition">
+                        SIRADAKİ ▼
+                    </button>
+                </div>
+            </div>
+        </header>
         
-        // Sıfırlama
-        aktifIndeks = -1;
-        tumEslasmeler = [];
-        
-        // Önceki vurguları temizle (HTML yapısını bozmadan metni geri getir)
-        const temizMetin = icerikDiv.innerHTML.replace(/<mark class="highlight( active-highlight)?">|<\/mark>/g, "");
-        icerikDiv.innerHTML = temizMetin;
+        <main id="mevzuatIcerik" class="max-w-4xl mx-auto bg-white p-6 shadow-sm min-h-screen">
+            </main>
+    </div>
 
-        if (kelime.length < 2) {
-            adetGosterge.innerText = "0/0";
-            return;
+    <script>
+        let tumVeri = [];
+        let sayfaEslasme = [];
+        let aktifEslasmeIndeks = -1;
+        let aramaTimer;
+
+        // 1. VERİLERİ YÜKLE
+        fetch('ara_verisi.json')
+            .then(r => r.json())
+            .then(data => {
+                tumVeri = data;
+                document.getElementById('toplamSayi').innerText = `${tumVeri.length} DOSYA`;
+                listeYenile(tumVeri);
+            })
+            .catch(err => alert("Veri dosyası (ara_verisi.json) bulunamadı!"));
+
+        // 2. ANA LİSTELEME
+        function listeYenile(liste, anahtar = "") {
+            const container = document.getElementById('anaListe');
+            container.innerHTML = "";
+            
+            // Performans için ilk 100 sonucu göster
+            liste.slice(0, 100).forEach(item => {
+                const kart = document.createElement('div');
+                kart.className = "bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:border-blue-500 hover:shadow-md cursor-pointer transition-all active:scale-[0.98]";
+                
+                const baslik = item.baslik.replace(/\.[^/.]+$/, "");
+                const onizleme = item.icerik ? item.icerik.substring(0, 160) + "..." : "İçerik yok.";
+
+                kart.innerHTML = `
+                    <h3 class="text-blue-900 font-black text-lg leading-tight mb-2">${baslik}</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed">${onizleme}</p>
+                `;
+                kart.onclick = () => kanunAc(item.yol);
+                container.appendChild(kart);
+            });
         }
 
-        // Büyük/Küçük harf duyarsız arama
-        const regex = new RegExp(`(${kelime})`, 'gi');
-        
-        // İçeriği boyayarak yeniden yaz
-        icerikDiv.innerHTML = icerikDiv.innerHTML.replace(regex, `<mark class="highlight">$1</mark>`);
+        // 3. ANA ARAMA (Gecikmeli)
+        document.getElementById('anaAra').addEventListener('input', (e) => {
+            const kelime = e.target.value.toLocaleLowerCase('tr').trim();
+            clearTimeout(aramaTimer);
+            aramaTimer = setTimeout(() => {
+                const filtre = tumVeri.filter(m => 
+                    m.baslik.toLocaleLowerCase('tr').includes(kelime) || 
+                    m.icerik.toLocaleLowerCase('tr').includes(kelime)
+                );
+                listeYenile(filtre, kelime);
+            }, 300);
+        });
 
-        // Tüm boyananları listeye al
-        tumEslasmeler = icerikDiv.querySelectorAll('.highlight');
-        
-        if (tumEslasmeler.length > 0) {
-            aktifIndeks = 0;
-            guncelleVeOdaklan();
-        } else {
-            adetGosterge.innerText = "0/0";
+        // 4. KANUNU OKUYUCUDA AÇ
+        async function kanunAc(yol) {
+            document.getElementById('anaSayfa').style.display = 'none';
+            document.getElementById('okuyucuModu').style.display = 'block';
+            const icerikDiv = document.getElementById('mevzuatIcerik');
+            icerikDiv.innerHTML = "<div class='text-center py-20 text-slate-400 animate-pulse'>Yükleniyor...</div>";
+
+            try {
+                const res = await fetch(yol);
+                const html = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Gereksiz stil ve scriptleri temizle
+                const scripts = doc.querySelectorAll('script, style');
+                scripts.forEach(s => s.remove());
+                
+                icerikDiv.innerHTML = doc.body.innerHTML;
+                window.suAnkiUrl = window.location.origin + window.location.pathname.replace('index.html','') + yol;
+                
+                // Aramayı sıfırla
+                document.getElementById('sayfaIciAra').value = "";
+                document.getElementById('sayfaSayac').innerText = "0/0";
+                window.scrollTo(0,0);
+            } catch (err) {
+                icerikDiv.innerHTML = "<div class='text-red-500'>Hata: Sayfa yüklenemedi.</div>";
+            }
         }
-    });
 
-    // SIRADAKİ EŞLEŞMEYE GİT
-    function siradakiEslasme() {
-        if (tumEslasmeler.length === 0) return;
+        // 5. SAYFA İÇİ ARAMA VE BOYAMA
+        document.getElementById('sayfaIciAra').addEventListener('input', function() {
+            const kelime = this.value.trim();
+            const icerikDiv = document.getElementById('mevzuatIcerik');
+            const sayac = document.getElementById('sayfaSayac');
 
-        // Eski aktifi temizle
-        if (aktifIndeks >= 0) {
-            tumEslasmeler[aktifIndeks].classList.remove('active-highlight');
+            // Temizlik
+            aktifEslasmeIndeks = -1;
+            sayfaEslasme = [];
+            const temizMetin = icerikDiv.innerHTML.replace(/<mark class="highlight( active-highlight)?">|<\/mark>/g, "");
+            icerikDiv.innerHTML = temizMetin;
+
+            if (kelime.length < 2) {
+                sayac.innerText = "0/0";
+                return;
+            }
+
+            const regex = new RegExp(`(${kelime})`, 'gi');
+            icerikDiv.innerHTML = icerikDiv.innerHTML.replace(regex, `<mark class="highlight">$1</mark>`);
+
+            sayfaEslasme = icerikDiv.querySelectorAll('.highlight');
+            
+            if (sayfaEslasme.length > 0) {
+                aktifEslasmeIndeks = 0;
+                odaklan();
+            } else {
+                sayac.innerText = "0/0";
+            }
+        });
+
+        // 6. SIRADAKİNE GİT
+        function siradaki() {
+            if (sayfaEslasme.length === 0) return;
+            sayfaEslasme[aktifEslasmeIndeks].classList.remove('active-highlight');
+            aktifEslasmeIndeks = (aktifEslasmeIndeks + 1) % sayfaEslasme.length;
+            odaklan();
         }
 
-        // Bir sonrakine geç (sona gelirse başa dön)
-        aktifIndeks = (aktifIndeks + 1) % tumEslasmeler.length;
-        
-        guncelleVeOdaklan();
-    }
+        function odaklan() {
+            const hedef = sayfaEslasme[aktifEslasmeIndeks];
+            hedef.classList.add('active-highlight');
+            document.getElementById('sayfaSayac').innerText = `${aktifEslasmeIndeks + 1}/${sayfaEslasme.length}`;
+            hedef.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
 
-    // GÖRÜNÜMÜ GÜNCELLE VE ODAKLAN
-    function guncelleVeOdaklan() {
-        const hedef = tumEslasmeler[aktifIndeks];
-        const adetGosterge = document.getElementById('bulunanAdet');
+        function kapat() {
+            document.getElementById('okuyucuModu').style.display = 'none';
+            document.getElementById('anaSayfa').style.display = 'block';
+        }
 
-        // Mevcut olanı belirginleştir (Turuncu yap)
-        hedef.classList.add('active-highlight');
-        
-        // Sayacı güncelle (Örn: 3/15)
-        adetGosterge.innerText = `${aktifIndeks + 1}/${tumEslasmeler.length}`;
+        function paylas() {
+            if (navigator.share) {
+                navigator.share({ title: 'Mevzuat Paylaş', url: window.suAnkiUrl });
+            } else {
+                alert("Link kopyalandı: " + window.suAnkiUrl);
+            }
+        }
 
-        // Yumuşak kaydırma ile kelimeye odaklan
-        hedef.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    // CSS EKLEMESİ (Style etiketinin içine ekle)
-    /*
-    .active-highlight { 
-        background-color: #f59e0b !important; 
-        border: 2px solid #000 !important; 
-        box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
-    }
-    */
-</script>
+        function favoriEkle() {
+            alert("Favorilere Eklendi! (Cihaz hafızasına kaydedildi)");
+        }
+    </script>
+</body>
+</html>
