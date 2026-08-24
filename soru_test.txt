@@ -1,0 +1,6 @@
+Hangi gezegen
+Kizil Gezegen'dir?
+A) Venus
+B) Mars (Dokun)
+C) Jupiter
+D) Saturn
