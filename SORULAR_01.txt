@@ -1,6 +1,3 @@
-Hangi gezegen
-Kizil Gezegen'dir?
-A) Venus
-B) Mars (Dokun)
-C) Jupiter
-D) Saturn
+Güneş sistemindeki en büyük gezegen hangisidir?|Mars|Dünya|Jüpiter|Venüs|C
+Türkiye'nin başkenti neresidir?|İstanbul|Ankara|İzmir|Antalya|B
+Hangi hayvan memeli olduğu halde uçabilir?|Yarasa|Kartal|Penguen|Güvercin|A
