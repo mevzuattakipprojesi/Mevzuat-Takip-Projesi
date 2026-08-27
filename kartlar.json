@@ -1,0 +1,21 @@
+{
+  "1001": {
+    "tur": "muzik",
+    "isim": "Ali Babanin Ciftligi",
+    "mp3": "mp3/ali_babanin_ciftligi.mp3",
+    "soz_dosya": "sozler/ali_babanin_ciftligi.txt"
+  },
+
+  "1002": {
+    "tur": "masal",
+    "isim": "Kirmizi Baslikli Kiz",
+    "mp3": "mp3/kirmizi_baslikli_kiz.mp3",
+    "soz_dosya": ""
+  },
+
+  "2001": {
+    "tur": "soru",
+    "isim": "Hayvanlar Bilgi Yarismasi",
+    "soru_dosya": "sorular/hayvanlar_2001.txt"
+  }
+}
