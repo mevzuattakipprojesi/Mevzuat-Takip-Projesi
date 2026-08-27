@@ -1,0 +1,3 @@
+Kediler hangi hayvan grubundadir?|Memeli|Surungen|Balik|Kus|A
+Dunyanin en buyuk kara hayvani hangisidir?|Aslan|Afrika Fili|Zebra|At|B
+Penguenler nerede yasayabilir?|Col|Kutup bolgeleri|Orman|Savanna|B
