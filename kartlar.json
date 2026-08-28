@@ -1,21 +1,22 @@
 {
   "1001": {
     "tur": "muzik",
-    "isim": "Ali Babanin Ciftligi",
-    "mp3": "mp3/Kamuran Akkor.mp3",
-    "soz_dosya": "sozler/ali_babanin_ciftligi.txt"
+    "isim": "Kamuran Akkor",
+    "mp3": "Kamuran Akkor.mp3",
+    "soz_dosya": "Kamuran Akkor.txt",
+    "surum": 2
   },
-
   "1003": {
     "tur": "masal",
     "isim": "Kirmizi Baslikli Kiz",
-    "mp3": "mp3/kirmizi_baslikli_kiz.mp3",
-    "soz_dosya": ""
+    "mp3": "Kirmizi Baslikli Kiz.mp3",
+    "soz_dosya": "",
+    "surum": 1
   },
-
   "1002": {
     "tur": "soru",
     "isim": "Hayvanlar Bilgi Yarismasi",
-    "soru_dosya": "sorular/sorular1.txt"
+    "soru_dosya": "Hayvanlar.txt",
+    "surum": 1
   }
 }
